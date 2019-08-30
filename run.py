@@ -3,7 +3,7 @@
 """
 	Entry Point
 	Python Modules Pre-requisites:   
-		pip3 install -U streamlink pymediainfo ffmpeg-python numpy pyopencl
+		pip3 install -U streamlink pymediainfo ffmpeg-python numpy pyopencl xmltodict
         
   -------  MpegTS   -----  RAW bgr24  ------  RAW bgr24  ----- 
  | SLINK |-------->| DEC |---------->| FPGA |---------->| ENC |------>
@@ -286,11 +286,10 @@ class fpgaStream:
         print('Stopping Stream Encoder...')
         #self.enc_process.stdin.close()
         #self.enc_process.wait()
+        
 
-
-
-if __name__ == '__main__':
-    
+         
+if __name__ == '__main__':    
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--board", type=str, default='aws',
             required=False, dest="board", help="Execution FPGA Board")
@@ -323,6 +322,7 @@ if __name__ == '__main__':
         
         if(args.slink):
             fst.start_slink_only_process()
+            sys.exit(0)
         else:
             fst.start_stream_decoder()
             fst.start_stream_encoder()
@@ -335,6 +335,6 @@ if __name__ == '__main__':
             fst.stop_stream_decoder()
             fst.stop_stream_encoder()
     finally:
-        if(not args.noclean):
+        if(not args.noclean and not args.bpfpga):
             clean_bigcorp_data(env='dev', product_lib='demos', 
                 product_name='video_scrambling', cred='./cred.json')

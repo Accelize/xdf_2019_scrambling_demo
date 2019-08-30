@@ -19,6 +19,8 @@ import pyopencl as cl
 import numpy as np
 import contextlib
 import io
+import xmltodict
+import json
 
 # Accelize DRM Library
 from accelize_drm import DrmManager as _DrmManager
@@ -30,8 +32,9 @@ class fpgaApp:
                     buffIn=None, buffOut=None, board=None):
         self.xclbin=xclbin
         self.drmbypass=drmbypass
-        self.drm_base_address=0x1C00000 #TODO: get from xclbin
+        self.drm_base_address=get_drmbaseaddr_from_xclbin(xclbin)
         self.data_size=data_size
+        self.board_reset_cmd=''
         self.ocl_ctx = None
         self.ocl_prg = None
         self.ocl_q = None
@@ -41,9 +44,10 @@ class fpgaApp:
         self.fpga_driver_name = None
         self.fpga_driver = None
         self.drm_manager = None
-        self.force_fpga_reset(board)
+        self.init_board(board)
         self.init_hal(buffIn, buffOut)
         self.init_drm()
+     
      
     def __del__(self):
         try:
@@ -51,17 +55,51 @@ class fpgaApp:
             self.drm_manager = None
         except:
             pass
+    
+    
+    def reset_board(self):
+        print('Forcing Reset of FPGA Chip...')
+        os.system(self.board_reset_cmd)
             
-    def force_fpga_reset(self, board):
+            
+    def init_board(self, board, reset=True):
         if board=='aws':
-            self.fpga_driver_name='aws_f1'
-        #    print('Forcing Reset of FPGA Chip...')
-        #    os.system('sudo fpga-clear-local-image -S 0 -H')
+            self.fpga_driver_name='aws_f1'           
+            self.board_reset_cmd='fpga-clear-local-image -S 0 -H'
         if board=='u200':
             self.fpga_driver_name='xilinx_xrt'
-            print('Forcing Reset of FPGA Chip...')
-            os.system('xbutil reset -d 0')
+            self.board_reset_cmd='xbutil reset -d 0'
+        if reset:
+           self.reset_board()
             
+            
+    def get_drmbaseaddr_from_xclbin(self, xclbin):
+        pattern_start = '<project name="'
+        pattern_end = '</project>'
+        start=None
+        end=None
+        xmltxt=None
+        with open(xclbin, "rb") as f:
+            for line in f:
+                try:
+                    l = line.decode('utf-8')
+                    if(pattern_start in l):
+                        start = f.tell() - len(line)
+                    if(pattern_end in l):
+                        end = f.tell()-1
+                        break
+                except UnicodeDecodeError:
+                    continue
+        
+        with open(xclbin, "r") as f:
+            f.seek(start, 0)
+            xmltxt = f.read(end-start)
+        xmld = xmltodict.parse(xmltxt)    
+        for krnl in xmld['project']['platform']['device']['core']['kernel']:
+            if(krnl['@name']=='drm_controller_axi4st'):
+                return krnl['instance']['addrRemap']['@base']
+        return None
+    
     
     def init_hal(self, buffIn, buffOut):
         # Get platform/device information
@@ -94,6 +132,7 @@ class fpgaApp:
                 cl.mem_flags.USE_HOST_PTR|cl.mem_flags.WRITE_ONLY, 
                 size=0, hostbuf=buffOut) 
         
+        
     def send(self):
         # Set the Kernel Arguments
         npSize = np.int32(self.data_size/4)
@@ -106,6 +145,7 @@ class fpgaApp:
         # Launch the Kernel
         cl.enqueue_nd_range_kernel(self.ocl_q, self.ocl_krnl_input_stage, 
             [1], [1])
+        
         
     def recv(self):
         # Set the Kernel Arguments
@@ -150,6 +190,7 @@ class fpgaApp:
             print(f"[DRMLIB] Session ID: {self.drm_manager.get('session_id')}")
             time.sleep(2)
                 
+                
     def release_drm(self):
         if not self.drmbypass:
             self.drm_manager.deactivate()
@@ -176,7 +217,6 @@ def run(xclbinpath=None, frame_size=None, bypassDRM=False):
         print(f"Error: Result mismatch")
         fapp.printDiff(source_sw_results, source_hw_results)
         raise
-            
     print("TEST PASSED")
 
 if __name__ == '__main__':
