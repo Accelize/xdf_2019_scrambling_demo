@@ -100,12 +100,15 @@ class fpgaStream:
  
     def slink_read(self):
         while self.slink_exit==False:
-            data = self.stream_fd.read(self.frame_size)
-            if len(data)==0:
-                print("[WARNING] streamlink_read: Unable to read from fd")
-                continue
-            self.dec_process.stdin.write(data)
-            time.sleep(1)
+            try:
+                data = self.stream_fd.read(self.frame_size)
+                if len(data)==0:
+                    print("[WARNING] streamlink_read: Unable to read from fd")
+                    continue
+                self.dec_process.stdin.write(data)
+                time.sleep(1)
+            except:
+                pass
 
         
     def open_stream(self, streamUrl):
@@ -205,14 +208,12 @@ class fpgaStream:
         in_bytes  = self.aligned_array(4096, ctypes.c_byte, self.frame_size)
         out_bytes = self.aligned_array(4096, ctypes.c_byte, self.frame_size)
            
-        try:
-            self.fapp = fpga_app.fpgaApp(self.fapp_xclbin, self.fapp_drmbypass, 
-                data_size=self.frame_size, buffIn=in_bytes, 
-                buffOut=out_bytes, board=self.board)
-            time.sleep(1)
-        except:
-            print(f"[ERROR] Unable to start FPGA Application !!")
-            return
+        self.fapp = fpga_app.fpgaApp(self.fapp_xclbin, self.fapp_drmbypass, 
+            data_size=self.frame_size, buffIn=in_bytes, 
+            buffOut=out_bytes, board=self.board)
+        if self.verb:
+            print(self.fapp)
+        time.sleep(1)
         
         
         print('Starting Stream Processing...')

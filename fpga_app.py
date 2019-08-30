@@ -32,8 +32,9 @@ class fpgaApp:
                     buffIn=None, buffOut=None, board=None):
         self.xclbin=xclbin
         self.drmbypass=drmbypass
-        self.drm_base_address=get_drmbaseaddr_from_xclbin(xclbin)
+        self.drm_base_address=self.get_drmbaseaddr_from_xclbin(xclbin)
         self.data_size=data_size
+        self.board=board
         self.board_reset_cmd=''
         self.ocl_ctx = None
         self.ocl_prg = None
@@ -55,6 +56,18 @@ class fpgaApp:
             self.drm_manager = None
         except:
             pass
+            
+    def __str__(self):
+        s  = "\n"
+        s += f"fpgaApp:\n"
+        s += f"\tboard            = {self.board}\n"
+        s += f"\tdrm_base_address = {hex(self.drm_base_address)}\n"
+        s += f"\tboard_reset_cmd  = {self.board_reset_cmd}\n"
+        s += f"\tfpga_driver_name = {self.fpga_driver_name}\n"
+        s += f"\txclbin           = {self.xclbin}\n"
+        s += f"\tdata_size        = {self.data_size}\n"
+        s += "\n"
+        return s
     
     
     def reset_board(self):
@@ -97,7 +110,7 @@ class fpgaApp:
         xmld = xmltodict.parse(xmltxt)    
         for krnl in xmld['project']['platform']['device']['core']['kernel']:
             if(krnl['@name']=='drm_controller_axi4st'):
-                return krnl['instance']['addrRemap']['@base']
+                return int(krnl['instance']['addrRemap']['@base'], 16)
         return None
     
     
