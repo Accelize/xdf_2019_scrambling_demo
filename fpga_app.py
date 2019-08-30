@@ -29,7 +29,7 @@ from accelize_drm.fpga_drivers import get_driver as _get_driver
 
 class fpgaApp:
     def __init__(self, xclbin=None, drmbypass=False, data_size=4096, 
-                    buffIn=None, buffOut=None, board=None):
+                    buffIn=None, buffOut=None, board=None, reset=False):
         self.xclbin=xclbin
         self.drmbypass=drmbypass
         self.drm_base_address=self.get_drmbaseaddr_from_xclbin(xclbin)
@@ -45,7 +45,7 @@ class fpgaApp:
         self.fpga_driver_name = None
         self.fpga_driver = None
         self.drm_manager = None
-        self.init_board(board)
+        self.init_board(board, reset)
         self.init_hal(buffIn, buffOut)
         self.init_drm()
      
@@ -75,7 +75,7 @@ class fpgaApp:
         os.system(self.board_reset_cmd)
             
             
-    def init_board(self, board, reset=True):
+    def init_board(self, board, reset=False):
         if board=='aws':
             self.fpga_driver_name='aws_f1'           
             self.board_reset_cmd='fpga-clear-local-image -S 0 -H'

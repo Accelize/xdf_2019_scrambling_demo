@@ -64,8 +64,8 @@ class NoAvailableStream(Error):
 class fpgaStream:
     """
     """
-    def __init__(self, board, target_url, 
-                    drmbypass=False, verbosity=False):
+    def __init__(self, board, target_url, drmbypass=False, 
+                    reset=False, verbosity=False):
         self.exit=False
         self.slink_exit=False
         self.target_url=target_url
@@ -83,6 +83,7 @@ class fpgaStream:
         self.dec_process=None
         self.enc_process=None
         self.board=board
+        self.board_reset=reset
         self.verb=verbosity
         if board == 'aws':
             self.fapp_xclbin=FPGA_BITSTREAM_AWS
@@ -210,7 +211,7 @@ class fpgaStream:
            
         self.fapp = fpga_app.fpgaApp(self.fapp_xclbin, self.fapp_drmbypass, 
             data_size=self.frame_size, buffIn=in_bytes, 
-            buffOut=out_bytes, board=self.board)
+            buffOut=out_bytes, board=self.board, reset=self.board_reset)
         if self.verb:
             print(self.fapp)
         time.sleep(1)
@@ -307,6 +308,8 @@ if __name__ == '__main__':
             help="Display Streamlink output")
     parser.add_argument("--no-clean", action="store_true", dest="noclean", 
             help="Do not clean portal product & usages")
+    parser.add_argument("-r", "--reset", action="store_true", dest="rst", 
+            help="Reset Board")
     parser.add_argument("-v", "--verbose", action="store_true", dest="verb", 
             help="Verbose mode")
     
@@ -318,7 +321,7 @@ if __name__ == '__main__':
             os.environ['FFREPORT'] = "1"
         
         fst = fpgaStream(board=args.board, target_url=args.url, 
-                drmbypass=args.bpdrm, verbosity=args.verb)
+                drmbypass=args.bpdrm, reset=args.rst, verbosity=args.verb)
         fst.open_stream(streamUrl=args.stream)
         
         if(args.slink):
