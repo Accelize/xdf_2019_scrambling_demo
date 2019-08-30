@@ -17,8 +17,6 @@ import time
 import ctypes
 import pyopencl as cl
 import numpy as np
-import contextlib
-import io
 import xmltodict
 import json
 

@@ -3,28 +3,23 @@
 """
 	Entry Point
 	Python Modules Pre-requisites:   
-		pip3 install -U streamlink pymediainfo ffmpeg-python numpy pyopencl xmltodict
+		pip3 install -U streamlink ffmpeg-python numpy pyopencl xmltodict
         
   -------  MpegTS   -----  RAW bgr24  ------  RAW bgr24  ----- 
  | SLINK |-------->| DEC |---------->| FPGA |---------->| ENC |------>
   -------  (pipe)   -----    (pipe)   ------    (pipe)   -----  (UDP)
  
 
-    ffplay -an -sn -framedrop -probesize 32 udp://127.0.0.1:8082          
+    ffplay -an -sn -framedrop -probesize 32 udp://127.0.0.1:8082
+    ffplay -an -sn -framedrop -fflags nobuffer+fastseek+flush_packets -flags low_delay -strict experimental udp://127.0.0.1:8082          
+    mpv --no-cache --no-demuxer-thread --vd-lavc-threads=1 udp://127.0.0.1:8082
 """
 
 import sys
 import os
-import errno
 import time
 from datetime import timedelta, datetime
 import argparse
-import subprocess
-from pymediainfo import MediaInfo
-import signal
-import streamlink
-import subprocess as sp
-import numpy as np
 import ctypes
 import fpga_app
 from streamlink import Streamlink
@@ -115,7 +110,7 @@ class fpgaStream:
         if streamUrl is not None:
             try:
                 print(f"Trying to reach Custom URL = {streamUrl}")
-                streams = streamlink.streams(streamUrl)
+                streams = self.slk.streams(streamUrl)
                 for res in RESOLUTIONLIST:
                     if res in streams:
                         self.stream = streams[res]        
@@ -130,7 +125,7 @@ class fpgaStream:
         for name, url in STREAMDICT.items():            
             try:
                 print(f"Trying to reach {name} at url={url}")
-                streams = streamlink.streams(url)
+                streams = self.slk.streams(url)
                 for res in RESOLUTIONLIST:
                     if res in streams:
                         self.stream = streams[res]        
@@ -212,9 +207,7 @@ class fpgaStream:
             data_size=self.frame_size, buffIn=in_bytes, 
             buffOut=out_bytes, board=self.board, reset=self.board_reset)
         if self.verb:
-            print(self.fapp)
-        time.sleep(1)
-        
+            print(self.fapp)        
         
         print('Starting Stream Processing...')
         frame_cnt=0

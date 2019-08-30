@@ -79,7 +79,7 @@ def clean_bigcorp_data(env='dev', product_lib='demos',
     if status != 200:
         print(f"[ERROR] Portal Clean-up Failed: Status = {status} Response=[{response}]")
     else:
-        print("\tPortal Clean-up Suceeed!")
+        print("[Portal] Clean-up Succeed!")
 
 
 
