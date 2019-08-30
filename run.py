@@ -10,7 +10,6 @@
   -------  (pipe)   -----    (pipe)   ------    (pipe)   -----  (UDP)
  
 
-    mpv --cache=no --demuxer-readahead-secs=0 --demuxer-readahead-secs=0 --demuxer-max-bytes=0 --demuxer-max-back-bytes=0 udp://127.0.0.1:8082
     ffplay -an -sn -framedrop -probesize 32 udp://127.0.0.1:8082          
 """
 
@@ -313,32 +312,30 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--verbose", action="store_true", dest="verb", 
             help="Verbose mode")
     
-    args=parser.parse_args()    
+    args=parser.parse_args()   
     
-    try:
+    if(not args.noclean and not args.bpfpga):
+        clean_bigcorp_data(env='dev', product_lib='demos', 
+            product_name='video_scrambling', cred='./cred.json') 
     
-        if(args.verb):
-            os.environ['FFREPORT'] = "1"
+    if(args.verb):
+        os.environ['FFREPORT'] = "1"
+    
+    fst = fpgaStream(board=args.board, target_url=args.url, 
+            drmbypass=args.bpdrm, reset=args.rst, verbosity=args.verb)
+    fst.open_stream(streamUrl=args.stream)
+    
+    if(args.slink):
+        fst.start_slink_only_process()
+        sys.exit(0)
+    else:
+        fst.start_stream_decoder()
+        fst.start_stream_encoder()
         
-        fst = fpgaStream(board=args.board, target_url=args.url, 
-                drmbypass=args.bpdrm, reset=args.rst, verbosity=args.verb)
-        fst.open_stream(streamUrl=args.stream)
-        
-        if(args.slink):
-            fst.start_slink_only_process()
-            sys.exit(0)
+        if(args.bpfpga):
+            fst.start_bypass_process()
         else:
-            fst.start_stream_decoder()
-            fst.start_stream_encoder()
-            
-            if(args.bpfpga):
-                fst.start_bypass_process()
-            else:
-                fst.start_fpga_process()
-            
-            fst.stop_stream_decoder()
-            fst.stop_stream_encoder()
-    finally:
-        if(not args.noclean and not args.bpfpga):
-            clean_bigcorp_data(env='dev', product_lib='demos', 
-                product_name='video_scrambling', cred='./cred.json')
+            fst.start_fpga_process()
+        
+        fst.stop_stream_decoder()
+        fst.stop_stream_encoder()
