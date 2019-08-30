@@ -282,6 +282,35 @@ class fpgaStream:
         #self.enc_process.wait()
         
 
+def run(board='aws', stream=None, url='52.48.128.138:8082', 
+            bpdrm=False, bpfpga=False, slinkonly=False, noclean=False, 
+            reset=False, verbose=False):
+                
+    if(not noclean and not bpfpga):
+        clean_bigcorp_data(env='dev', product_lib='demos', 
+            product_name='video_scrambling', cred='./cred.json') 
+    
+    if(verbose):
+        os.environ['FFREPORT'] = "1"
+    
+    fst = fpgaStream(board=board, target_url=url, drmbypass=bpdrm, 
+            reset=reset, verbosity=verbose)
+    fst.open_stream(streamUrl=stream)
+    
+    if(slinkonly):
+        fst.start_slink_only_process()
+    else:
+        fst.start_stream_decoder()
+        fst.start_stream_encoder()
+        
+        if(bpfpga):
+            fst.start_bypass_process()
+        else:
+            fst.start_fpga_process()
+        
+        fst.stop_stream_decoder()
+        fst.stop_stream_encoder()
+
          
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser()
@@ -306,29 +335,7 @@ if __name__ == '__main__':
             help="Verbose mode")
     
     args=parser.parse_args()   
+    run(board=args.board, stream=args.stream, url=args.url, 
+            bpdrm=args.bpdrm, bpfpga=args.bpfpga, slinkonly=args.slink, 
+            noclean=args.noclean, reset=args.rst, verbose=args.verb)
     
-    if(not args.noclean and not args.bpfpga):
-        clean_bigcorp_data(env='dev', product_lib='demos', 
-            product_name='video_scrambling', cred='./cred.json') 
-    
-    if(args.verb):
-        os.environ['FFREPORT'] = "1"
-    
-    fst = fpgaStream(board=args.board, target_url=args.url, 
-            drmbypass=args.bpdrm, reset=args.rst, verbosity=args.verb)
-    fst.open_stream(streamUrl=args.stream)
-    
-    if(args.slink):
-        fst.start_slink_only_process()
-        sys.exit(0)
-    else:
-        fst.start_stream_decoder()
-        fst.start_stream_encoder()
-        
-        if(args.bpfpga):
-            fst.start_bypass_process()
-        else:
-            fst.start_fpga_process()
-        
-        fst.stop_stream_decoder()
-        fst.stop_stream_encoder()
