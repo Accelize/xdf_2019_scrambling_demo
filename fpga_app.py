@@ -19,6 +19,7 @@ import pyopencl as cl
 import numpy as np
 import xmltodict
 import json
+from threading import Thread
 
 # Accelize DRM Library
 from accelize_drm import DrmManager as _DrmManager
@@ -43,8 +44,11 @@ class fpgaApp:
         self.fpga_driver_name = None
         self.fpga_driver = None
         self.drm_manager = None
+        self.drm_activated=False
+        self.thread_drm_activation = None
         self.init_board(board, reset)
         self.init_hal(buffIn, buffOut)
+        self.thread_drm_activation = Thread(target=self.drm_activation_thread)
         self.init_drm()
      
      
@@ -64,6 +68,7 @@ class fpgaApp:
         s += f"\tfpga_driver_name = {self.fpga_driver_name}\n"
         s += f"\txclbin           = {self.xclbin}\n"
         s += f"\tdata_size        = {self.data_size}\n"
+        s += f"\tdrm_activated    = {self.drm_activated}\n"
         s += "\n"
         return s
     
@@ -193,15 +198,32 @@ class fpgaApp:
                 conf_file_path="./conf.json",
                 cred_file_path="./cred.json",
                 read_register=self.fpga_driver.read_register_callback,
-                write_register=self.fpga_driver.write_register_callback
+                write_register=self.fpga_driver.write_register_callback,
+                async_error=self.async_error_callback
                 #self.drm_read_callback,
                 #self.drm_write_callback,
             )
-            self.drm_manager.activate()
-            print(f"[DRMLIB] Session ID: {self.drm_manager.get('session_id')}")
+            self.thread_drm_activation.start()
             time.sleep(2)
-                
-                
+    
+    
+    def drm_activation_thread(self):
+        while True:
+            if self.drm_activated==False:
+                try:
+                    self.drm_manager.activate()
+                    self.drm_activated=True
+                    print(f"[DRMLIB] Session ID: {self.drm_manager.get('session_id')}")
+                except:
+                    self.drm_activated=False
+            time.sleep(10)
+                        
+                        
+    def async_error_callback(self, err_mess):
+        self.drm_activated=False
+        return None
+        
+        
     def release_drm(self):
         if not self.drmbypass:
             self.drm_manager.deactivate()
