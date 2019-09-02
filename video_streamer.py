@@ -99,8 +99,8 @@ class fpgaStream:
                 data = self.stream_fd.read(self.frame_size)
                 if len(data)==0:
                     print("[WARNING] streamlink_read: Unable to read from fd")
-                    continue
-                self.dec_process.stdin.write(data)
+                else:
+                    self.dec_process.stdin.write(data)
                 time.sleep(1)
             except:
                 pass
@@ -231,7 +231,7 @@ class fpgaStream:
                     now = datetime.now()
                     end_time = time.monotonic()
                     message = (
-                        f"\r[{now.year}/{now.month}/{now.day}" 
+                        f"\r[{now.year}/{now.month}/{now.day} " 
                         f"{now.hour}:{now.minute}:{now.second}] "
                         f"Processing frame {frame_cnt} - Running since "
                         f"{timedelta(seconds=end_time-start_time)}"
