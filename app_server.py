@@ -31,9 +31,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         
     def start_streaming_process(self):
         print('Starting Streaming...')
-        log=open('app_server.log', 'w+', 1
-        self.proc = Popen(['./run.sh'], universal_newlines=True, 
-                            stdout=log)
+        log=open('app_server.log', 'w+', 1)
+        Popen(['./run.sh'], universal_newlines=True, stdout=log)
 
     def kill_streaming_process(self):
         pids = self.get_process_pid(['run.sh','ffmpeg', 'video_streamer.py'])
@@ -57,10 +56,10 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         """POST"""
         self._set_headers()
-        length = int(self.headers["Content-Length"])
-        post_body=self.rfile.read(length)
+        length    = int(self.headers["Content-Length"])
+        post_body = self.rfile.read(length)
         post_body = post_body.decode('ascii')
-        fields = parse_qs(post_body)
+        fields    = parse_qs(post_body)
         print(fields)
         for key, val in fields.items():
             if key == 'cmd' and val[0]=='start':
