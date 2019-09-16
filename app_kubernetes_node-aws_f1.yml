@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-node-video-scrambler
+  labels:
+    app: k8s-node-video-scrambler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-node-video-scrambler
+  template:
+    metadata:
+      labels:
+        app: k8s-node-video-scrambler
+    spec:
+      containers:
+        - name: k8s-node-video-scrambler
+          image: accelize/accelpy-ci:container_service
+          ports:
+            - containerPort: 8080
+          # FPGA container access
+          # From Xilinx AWS device plugin example:
+          # https://github.com/Xilinx/FPGA_as_a_Service/blob/master/k8s-fpga-device-plugin/trunk/aws/mypod.yaml
+          securityContext:
+            privileged: true
+          resources:
+            limits:
+              xilinx.com/fpga-xilinx_aws-vu9p-f1-04261818_dynamic_5_0-0: 1
+          volumeMounts:
+            - name: sys
+              mountPath: /sys
+      volumes:
+        - name: sys
+          hostPath:
+            path: /sys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-node-video-scrambler
+  labels:
+    name: k8s-node-video-scrambler
+spec:
+  type: NodePort
+  selector:
+    app: k8s-node-video-scrambler
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30080
