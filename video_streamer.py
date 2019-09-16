@@ -25,7 +25,6 @@ import fpga_app
 from streamlink import Streamlink
 import ffmpeg
 from threading import Thread
-from portal import clean_bigcorp_data
 
 STREAMDICT = {
     "bloomberg_us":"https://www.youtube.com/watch?v=dp8PhLsUcFE",
@@ -283,12 +282,8 @@ class fpgaStream:
         
 
 def run(board='aws', stream=None, url='52.48.128.138:8082', 
-            bpdrm=False, bpfpga=False, slinkonly=False, noclean=False, 
+            bpdrm=False, bpfpga=False, slinkonly=False, 
             reset=False, verbose=False):
-                
-    if(not noclean and not bpfpga):
-        clean_bigcorp_data(env='dev', product_lib='demos', 
-            product_name='video_scrambling', cred='./cred.json') 
     
     if(verbose):
         os.environ['FFREPORT'] = "1"
@@ -327,8 +322,6 @@ if __name__ == '__main__':
             help="Send Streamlink data to output stream directly")
     parser.add_argument("--slink-only", action="store_true", dest="slink", 
             help="Display Streamlink output")
-    parser.add_argument("--no-clean", action="store_true", dest="noclean", 
-            help="Do not clean portal product & usages")
     parser.add_argument("-r", "--reset", action="store_true", dest="rst", 
             help="Reset Board")
     parser.add_argument("-v", "--verbose", action="store_true", dest="verb", 
@@ -337,5 +330,5 @@ if __name__ == '__main__':
     args=parser.parse_args()   
     run(board=args.board, stream=args.stream, url=args.url, 
             bpdrm=args.bpdrm, bpfpga=args.bpfpga, slinkonly=args.slink, 
-            noclean=args.noclean, reset=args.rst, verbose=args.verb)
+            reset=args.rst, verbose=args.verb)
     
