@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: k8s-node-video-scrambler
-          image: accelize/accelpy-ci:container_service
+          image: gdufourcq/video_scrambling:3
           ports:
             - containerPort: 8080
           # FPGA container access
@@ -48,6 +48,12 @@ spec:
     app: k8s-node-video-scrambler
   ports:
     - protocol: TCP
+      name: ctrl
       port: 8080
       targetPort: 8080
       nodePort: 30080
+    - protocol: UDP
+      name: stream
+      port: 8082
+      targetPort: 8082
+      nodePort: 30082
