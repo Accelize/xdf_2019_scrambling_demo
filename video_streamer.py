@@ -270,7 +270,7 @@ class fpgaStream:
         self.enc_process = ffmpeg.input('pipe:', f='rawvideo', pix_fmt='bgr24', 
                 s=f'{self.width}x{self.height}')
         self.enc_process = ffmpeg.output(self.enc_process.video, f"udp://{self.target_url}", 
-                f='mpegts', framerate=30 )
+                f='mpegts', framerate=30, maxrate='960k', bufsize='960k' )
         self.enc_process = ffmpeg.overwrite_output(self.enc_process)
         self.enc_process = ffmpeg.run_async(self.enc_process, quiet=True, pipe_stdin=True)
 
