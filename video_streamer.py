@@ -41,6 +41,7 @@ RESOLUTIONLIST= ['480p', '360p', '244p', 'worst']
 FPGA_BITSTREAM_AWS='rtl_scrambler_pipes_drm_aws.awsxclbin'
 FPGA_BITSTREAM_U200='rtl_scrambler_pipes_drm_u200_xdma_201830_2.xclbin'
 RECORD_FILE='record.ts'
+BSIZE=(1024*1024)
 
 # define Python user-defined exceptions
 class Error(Exception):
@@ -247,9 +248,9 @@ class fpgaStream:
         
     def start_stream_decoder(self):
         print('Starting Stream Decoder...')
-        self.dec_process = ffmpeg.input('pipe:', f='mpegts')
+        self.dec_process = ffmpeg.input('pipe:', blocksize=BSIZE, f='mpegts')
         self.dec_process = ffmpeg.output(self.dec_process.video, 'pipe:', 
-                f='rawvideo', pix_fmt='bgr24')
+                blocksize=BSIZE, f='rawvideo', pix_fmt='bgr24')
         self.dec_process = ffmpeg.run_async(self.dec_process, quiet=True, 
             pipe_stdin=True, pipe_stdout=True)        
         self.thread_slk.start()     
@@ -267,10 +268,10 @@ class fpgaStream:
         
     def start_stream_encoder(self):
         print('Starting Stream Encoder...')
-        self.enc_process = ffmpeg.input('pipe:', f='rawvideo', pix_fmt='bgr24', 
+        self.enc_process = ffmpeg.input('pipe:', blocksize=BSIZE, f='rawvideo', pix_fmt='bgr24', 
                 s=f'{self.width}x{self.height}')
         self.enc_process = ffmpeg.output(self.enc_process.video, f"udp://{self.target_url}", 
-                f='mpegts', framerate=30, maxrate='960k', bufsize='960k' )
+                f='mpegts', framerate=30, maxrate='1M', bufsize='1M' )
         self.enc_process = ffmpeg.overwrite_output(self.enc_process)
         self.enc_process = ffmpeg.run_async(self.enc_process, quiet=True, pipe_stdin=True)
 
