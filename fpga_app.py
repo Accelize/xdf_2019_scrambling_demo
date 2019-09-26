@@ -216,7 +216,7 @@ class fpgaApp:
                     print(f"[DRMLIB] Session ID: {self.drm_manager.get('session_id')}")
                 except:
                     self.drm_activated=False
-            time.sleep(10)
+            time.sleep(1)
                         
                         
     def async_error_callback(self, err_mess):

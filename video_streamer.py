@@ -71,6 +71,7 @@ class fpgaStream:
         self.frame_size=None
         self.stream_opened=False
         self.slk = Streamlink()
+        self.slk.set_option('ringbuffer-size', 131072)
         self.slink_running=False
         self.fapp_xclbin=None
         self.fapp_drmbypass=drmbypass
@@ -273,7 +274,8 @@ class fpgaStream:
         self.enc_process = ffmpeg.output(self.enc_process.video, f"udp://{self.target_url}", 
                 f='mpegts', framerate=30, maxrate='1M', bufsize='1M' )
         self.enc_process = ffmpeg.overwrite_output(self.enc_process)
-        self.enc_process = ffmpeg.run_async(self.enc_process, quiet=True, pipe_stdin=True)
+        self.enc_process = ffmpeg.run_async(self.enc_process, quiet=False, 
+                                pipe_stdin=True)
 
 
     def stop_stream_encoder(self):
