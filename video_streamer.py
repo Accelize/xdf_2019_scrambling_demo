@@ -102,7 +102,7 @@ class fpgaStream:
                     print("[WARNING] streamlink_read: Unable to read from fd")
                 else:
                     self.dec_process.stdin.write(data)
-                time.sleep(1)
+                time.sleep(0.5)
             except:
                 pass
 
@@ -249,11 +249,15 @@ class fpgaStream:
         
     def start_stream_decoder(self):
         print('Starting Stream Decoder...')
-        self.dec_process = ffmpeg.input('pipe:', blocksize=BSIZE, f='mpegts')
+        self.dec_process = ffmpeg.input('pipe:',
+                #blocksize=BSIZE,
+                f='mpegts',
+        vsync='drop')
         self.dec_process = ffmpeg.output(self.dec_process.video, 'pipe:', 
-                blocksize=BSIZE, f='rawvideo', pix_fmt='bgr24')
+                #blocksize=BSIZE, 
+                f='rawvideo', pix_fmt='bgr24')
         self.dec_process = ffmpeg.run_async(self.dec_process, quiet=True, 
-            pipe_stdin=True, pipe_stdout=True)        
+                pipe_stdin=True, pipe_stdout=True)        
         self.thread_slk.start()     
      
      
@@ -269,10 +273,14 @@ class fpgaStream:
         
     def start_stream_encoder(self):
         print('Starting Stream Encoder...')
-        self.enc_process = ffmpeg.input('pipe:', blocksize=BSIZE, f='rawvideo', pix_fmt='bgr24', 
+        self.enc_process = ffmpeg.input('pipe:', 
+                #blocksize=BSIZE, 
+                f='rawvideo', pix_fmt='bgr24', 
                 s=f'{self.width}x{self.height}')
         self.enc_process = ffmpeg.output(self.enc_process.video, f"udp://{self.target_url}", 
-                f='mpegts', framerate=30, maxrate='1M', bufsize='4M' )
+                f='mpegts', 
+                #framerate=30, 
+                maxrate='1M', bufsize='4M' )
         self.enc_process = ffmpeg.overwrite_output(self.enc_process)
         self.enc_process = ffmpeg.run_async(self.enc_process, quiet=False, 
                                 pipe_stdin=True)
