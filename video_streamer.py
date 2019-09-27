@@ -336,6 +336,7 @@ def run(board='aws', stream=None, url='52.48.128.138:8082',
         fst.start_stream_decoder()
         #fst.start_stream_encoder()
         thread_enc = Thread(target=fst.start_stream_encoder)
+        thread_enc.start()
         
         if(bpfpga):
             fst.start_bypass_process()
