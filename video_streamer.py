@@ -41,7 +41,7 @@ RESOLUTIONLIST= ['480p', '360p', '244p', 'worst']
 FPGA_BITSTREAM_AWS='rtl_scrambler_pipes_drm_aws.awsxclbin'
 FPGA_BITSTREAM_U200='rtl_scrambler_pipes_drm_u200_xdma_201830_2.xclbin'
 RECORD_FILE='record.ts'
-BSIZE=(1024*1024)
+#BSIZE=(1024*1024)
 
 # define Python user-defined exceptions
 class Error(Exception):
