@@ -283,19 +283,34 @@ class fpgaStream:
         #self.dec_process.wait()
         
         
+#    def start_stream_encoder(self):
+#        print('Starting Stream Encoder...')
+#        self.enc_process = ffmpeg.input('pipe:', 
+#                #blocksize=BSIZE, 
+#                f='rawvideo', pix_fmt='bgr24', 
+#                s=f'{self.width}x{self.height}')
+#        self.enc_process = ffmpeg.output(self.enc_process.video, f"udp://{self.target_url}", 
+#                f='mpegts', 
+#                #framerate=30, 
+#                maxrate='1M', bufsize='4M' )
+#        self.enc_process = ffmpeg.overwrite_output(self.enc_process)
+#        self.enc_process = ffmpeg.run_async(self.enc_process, quiet=False, 
+#                                pipe_stdin=True)
+
     def start_stream_encoder(self):
         print('Starting Stream Encoder...')
-        self.enc_process = ffmpeg.input('pipe:', 
-                #blocksize=BSIZE, 
-                f='rawvideo', pix_fmt='bgr24', 
-                s=f'{self.width}x{self.height}')
-        self.enc_process = ffmpeg.output(self.enc_process.video, f"udp://{self.target_url}", 
-                f='mpegts', 
-                #framerate=30, 
-                maxrate='1M', bufsize='4M' )
-        self.enc_process = ffmpeg.overwrite_output(self.enc_process)
-        self.enc_process = ffmpeg.run_async(self.enc_process, quiet=False, 
-                                pipe_stdin=True)
+        while True:
+            self.enc_process = ffmpeg.input('pipe:', 
+                    f='rawvideo', pix_fmt='bgr24', 
+                    s=f'{self.width}x{self.height}')
+            self.enc_process = ffmpeg.output(self.enc_process.video, f"udp://{self.target_url}", 
+                    f='mpegts', 
+                    maxrate='1M', bufsize='4M' )
+            self.enc_process = ffmpeg.overwrite_output(self.enc_process)
+            self.enc_process = ffmpeg.run_async(self.enc_process, quiet=True, 
+                                    pipe_stdin=True)
+            time.sleep(180)
+            self.enc_process.terminate()
 
 
     def stop_stream_encoder(self):
@@ -319,7 +334,8 @@ def run(board='aws', stream=None, url='52.48.128.138:8082',
         fst.start_slink_only_process()
     else:
         fst.start_stream_decoder()
-        fst.start_stream_encoder()
+        #fst.start_stream_encoder()
+        thread_enc = Thread(target=fst.start_stream_encoder)
         
         if(bpfpga):
             fst.start_bypass_process()
