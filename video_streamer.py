@@ -167,15 +167,27 @@ class fpgaStream:
         return (dtype * n).from_buffer(buf, offset)
         
 
+#    def start_slink_only_process(self):
+#        print('Starting Streamlink Only Process...')
+#        self.dec_process = ffmpeg.input('pipe:', f='mpegts')
+#        self.dec_process = ffmpeg.output(self.dec_process.video, 
+#            f"udp://{self.target_url}", f='mpegts')
+#        self.dec_process = ffmpeg.run_async(self.dec_process, quiet=True, 
+#            pipe_stdin=True)        
+#        self.thread_slk.start()
+#        input()
+        
     def start_slink_only_process(self):
         print('Starting Streamlink Only Process...')
-        self.dec_process = ffmpeg.input('pipe:', f='mpegts')
-        self.dec_process = ffmpeg.output(self.dec_process.video, 
-            f"udp://{self.target_url}", f='mpegts')
-        self.dec_process = ffmpeg.run_async(self.dec_process, quiet=True, 
-            pipe_stdin=True)        
         self.thread_slk.start()
-        input()
+        while True:
+            self.dec_process = ffmpeg.input('pipe:', f='mpegts')
+            self.dec_process = ffmpeg.output(self.dec_process.video, 
+                f"udp://{self.target_url}", f='mpegts')
+            self.dec_process = ffmpeg.run_async(self.dec_process, quiet=True, 
+                pipe_stdin=True)
+            time.sleep(60)
+            self.dec_process.terminate()
         
         
     def print_ffmpeg_cmd(self, ffstream):
